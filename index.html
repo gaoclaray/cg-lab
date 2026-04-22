@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh" style="color-scheme:light;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<meta name="description" content="汽配后市场 AI 实践社区 — CG Lab">
+<meta property="og:title" content="CG Lab — 汽配后市场 AI 实践社区">
+<title>CG Lab — 汽配后市场 AI 实践社区</title>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@200;300;400;500&family=Barlow+Condensed:wght@200;300;400;500;600&family=Noto+Sans+SC:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;color-scheme:light;}
+@media(prefers-color-scheme:dark){html,body{background:#f8f8f7!important;color:#1c1c1c!important;}}
+:root{
+  --bg:#f8f8f7;--bg2:#f0f1ee;--white:#fff;--black:#0c0c0c;
+  --text:#1c1c1c;--mid:#6e6e6e;--light:#aaa;--faint:#d8d8d8;
+  --blue:#0057ff;--blue-d:rgba(0,87,255,.08);--blue-l:rgba(0,87,255,.22);
+  --line:rgba(0,0,0,.07);--line2:rgba(0,0,0,.13);
+  --bar:'Barlow Condensed',sans-serif;--body:'Barlow',sans-serif;--cn:'Noto Sans SC',sans-serif;
+  --sh:0 2px 16px rgba(0,0,0,.05),0 0 0 1px rgba(0,0,0,.04);
+  --sh2:0 8px 40px rgba(0,0,0,.09),0 0 0 1px rgba(0,0,0,.06);
+}
+body{background:var(--bg)!important;color:var(--text);font-family:var(--body);font-weight:300;overflow-x:hidden;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:rgba(248,248,247,.94)!important;backdrop-filter:blur(20px);border-bottom:1px solid var(--line);}
+.nav-logo{font-family:var(--bar);font-weight:400;font-size:17px;color:var(--black);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;flex-shrink:0;}
+.nav-logo sub{font-family:var(--body);font-weight:200;font-size:9px;color:var(--blue);letter-spacing:.1em;margin-left:5px;}
+.nav-links{display:flex;gap:28px;list-style:none;}
+.nav-links a{font-family:var(--bar);font-size:11px;font-weight:300;color:var(--mid);text-decoration:none;letter-spacing:.1em;text-transform:uppercase;transition:color .2s;white-space:nowrap;}
+.nav-links a:hover{color:var(--black);}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);opacity:.45;flex-shrink:0;}
+.nav-ham{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
+.nav-ham span{display:block;width:20px;height:1px;background:var(--black);transition:all .3s;}
+.nav-ham.open span:nth-child(1){transform:rotate(45deg) translate(4px,4px);}
+.nav-ham.open span:nth-child(2){opacity:0;}
+.nav-ham.open span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px);}
+.mob-menu{display:none;position:fixed;inset:0;top:56px;z-index:199;background:rgba(248,248,247,.98);backdrop-filter:blur(20px);flex-direction:column;align-items:center;justify-content:center;gap:32px;border-top:1px solid var(--line);}
+.mob-menu.open{display:flex;}
+.mob-menu a{font-family:var(--bar);font-size:20px;font-weight:300;color:var(--mid);text-decoration:none;letter-spacing:.12em;text-transform:uppercase;transition:color .2s;}
+.mob-menu a:hover,.mob-menu a.mob-cta{color:var(--black);}
+.mob-menu a.mob-cta{font-size:13px;background:var(--black);color:#fff!important;padding:12px 30px;letter-spacing:.12em;margin-top:8px;}
+
+/* HERO */
+.hero{min-height:100vh;padding-top:56px;display:grid;grid-template-columns:1fr 440px;background:var(--white)!important;border-bottom:1px solid var(--line);position:relative;overflow:hidden;}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(ellipse 65% 85% at 25% 55%,black 30%,transparent 100%);opacity:.5;}
+.hero::after{content:'';position:absolute;left:0;top:18%;bottom:18%;width:2px;background:var(--blue);opacity:.35;}
+.hero-left{padding:88px 56px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2;}
+.hero-right{padding:72px 44px 72px 28px;display:flex;flex-direction:column;justify-content:center;gap:16px;border-left:1px solid var(--line);position:relative;z-index:2;}
+.hero-ey{font-family:var(--bar);font-weight:200;font-size:11px;color:var(--light);letter-spacing:.28em;text-transform:uppercase;margin-bottom:36px;display:flex;align-items:center;gap:16px;}
+.hero-ey::before{content:'';width:20px;height:1px;background:var(--blue);}
+.hero-h{font-family:var(--bar);font-weight:200;font-size:clamp(64px,8vw,116px);line-height:.88;letter-spacing:-.02em;color:var(--black);margin-bottom:6px;}
+.hero-h .ac{color:var(--blue);}
+.hero-kn{font-family:var(--cn);font-weight:200;font-size:15px;color:var(--light);letter-spacing:.55em;margin-bottom:48px;}
+.hero-desc-en{font-size:15px;font-weight:300;line-height:1.95;color:var(--mid);max-width:420px;margin-bottom:10px;}
+.hero-desc-en strong{color:var(--black);font-weight:500;}
+.hero-desc-cn{font-family:var(--cn);font-size:12px;font-weight:200;color:var(--light);margin-bottom:44px;line-height:2;}
+.cta-row{display:flex;gap:14px;flex-wrap:wrap;}
+.btn-p{font-family:var(--bar);font-size:12px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;background:var(--black);color:#fff!important;padding:13px 26px;text-decoration:none;transition:background .2s;display:inline-block;}
+.btn-p:hover{background:var(--blue);}
+.btn-g{font-family:var(--bar);font-size:12px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);border:1px solid var(--line2);padding:13px 26px;text-decoration:none;transition:all .2s;display:inline-block;}
+.btn-g:hover{color:var(--black);border-color:var(--black);}
+
+/* Portrait */
+.portrait{background:var(--bg2);border:1px solid var(--line2);overflow:hidden;}
+.portrait-img{aspect-ratio:3/4;background:linear-gradient(155deg,#ebebea,#ddddd9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;position:relative;overflow:hidden;}
+.portrait-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.ph-icon{font-size:40px;opacity:.1;z-index:1;}
+.ph-lbl{font-family:var(--bar);font-size:9px;color:var(--light);letter-spacing:.22em;text-transform:uppercase;z-index:1;}
+.portrait-img.has-img .ph-icon,.portrait-img.has-img .ph-lbl{display:none;}
+.p-caption{padding:14px 18px;border-top:1px solid var(--line);background:var(--white);display:flex;justify-content:space-between;align-items:center;}
+.pc-name{font-family:var(--bar);font-size:13px;font-weight:400;letter-spacing:.06em;color:var(--black);}
+.pc-role{font-family:var(--body);font-size:10px;color:var(--light);margin-top:2px;}
+.stat-strip{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line2);background:var(--white);}
+.ssi{padding:16px 20px;border-right:1px solid var(--line);transition:background .2s;}
+.ssi:last-child{border-right:none;}
+.ssi:hover{background:var(--bg);}
+.ssi-num{font-family:var(--bar);font-size:24px;font-weight:300;color:var(--blue);}
+.ssi-lbl{font-family:var(--cn);font-size:10px;font-weight:200;color:var(--light);margin-top:3px;}
+
+/* SECTION BASE */
+section{padding:100px 48px;position:relative;z-index:1;}
+.bg-w{background:var(--white)!important;}
+.bg-o{background:var(--bg)!important;}
+.sec-rule{display:flex;align-items:center;gap:18px;margin-bottom:44px;flex-wrap:wrap;}
+.sn{font-family:var(--bar);font-size:10px;font-weight:400;color:var(--faint);letter-spacing:.22em;}
+.st{font-family:var(--bar);font-size:10px;font-weight:600;color:var(--blue);letter-spacing:.25em;text-transform:uppercase;}
+.sc{font-family:var(--cn);font-size:10px;font-weight:200;color:var(--light);letter-spacing:.2em;}
+.sl{flex:1;height:1px;background:var(--line2);min-width:20px;}
+.sec-h{font-family:var(--bar);font-weight:200;font-size:clamp(36px,4.5vw,60px);letter-spacing:-.02em;color:var(--black);line-height:1;margin-bottom:8px;}
+.sec-s{font-family:var(--cn);font-size:12px;font-weight:200;color:var(--light);letter-spacing:.22em;margin-bottom:52px;}
+
+/* CHANNELS */
+#chs{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line2);border:1px solid var(--line2);}
+.ch{background:var(--white);padding:30px 22px 36px;position:relative;cursor:pointer;transition:background .2s;}
+.ch::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.25,.46,.45,.94);}
+.ch:hover{background:var(--bg);}
+.ch:hover::before{transform:scaleX(1);}
+.ch-n{font-family:var(--bar);font-size:10px;color:var(--faint);letter-spacing:.18em;margin-bottom:18px;}
+.ch-t{font-family:var(--bar);font-size:19px;font-weight:400;color:var(--black);letter-spacing:.02em;margin-bottom:3px;}
+.ch-e{font-family:var(--bar);font-size:11px;font-weight:300;color:var(--blue);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;}
+.ch-d{font-family:var(--cn);font-size:11px;font-weight:200;color:var(--mid);line-height:1.9;margin-bottom:16px;}
+.ch-ts{list-style:none;display:flex;flex-direction:column;gap:5px;}
+.ch-ts li{font-family:var(--cn);font-size:10px;font-weight:200;color:var(--light);padding-left:12px;position:relative;}
+.ch-ts li::before{content:'';position:absolute;left:0;top:50%;width:4px;height:1px;background:var(--blue);transform:translateY(-50%);}
+
+/* LAB */
+.filter-bar{display:flex;gap:8px;margin-bottom:44px;flex-wrap:wrap;}
+.fb{font-family:var(--bar);font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--mid);border:1px solid var(--line2);padding:7px 16px;cursor:pointer;transition:all .2s;background:transparent;}
+.fb:hover,.fb.on{color:var(--blue);border-color:var(--blue-l);background:var(--blue-d);}
+#cases{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line2);border:1px solid var(--line2);}
+.cc{background:var(--white);padding:32px 26px 68px;position:relative;overflow:hidden;cursor:pointer;transition:background .2s;}
+.cc::before{content:'';position:absolute;top:0;left:0;bottom:0;width:2px;background:var(--blue);transform:scaleY(0);transform-origin:top;transition:transform .4s cubic-bezier(.25,.46,.45,.94);}
+.cc:hover{background:var(--bg);}
+.cc:hover::before{transform:scaleY(1);}
+.cc-cover{width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#ebebea,#e0e0dc);margin-bottom:22px;overflow:hidden;}
+.cc-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+.cc-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.cc-tag{font-family:var(--bar);font-size:9px;font-weight:600;color:var(--blue);background:var(--blue-d);padding:3px 10px;letter-spacing:.2em;text-transform:uppercase;}
+.cc-date{font-family:var(--bar);font-size:10px;color:var(--light);letter-spacing:.08em;}
+.cc-title{font-family:var(--bar);font-size:19px;font-weight:400;color:var(--black);margin-bottom:5px;line-height:1.25;letter-spacing:.01em;}
+.cc-cn{font-family:var(--cn);font-size:11px;font-weight:200;color:var(--light);margin-bottom:12px;}
+.cc-desc{font-size:13px;font-weight:300;color:var(--mid);line-height:1.9;}
+.cc-link{position:absolute;bottom:22px;left:26px;font-family:var(--bar);font-size:11px;font-weight:500;color:var(--blue);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;display:flex;align-items:center;gap:8px;}
+.cc-link::after{content:'→';transition:transform .2s;}
+.cc:hover .cc-link::after{transform:translateX(4px);}
+
+/* VIDEO */
+.video-wrap{max-width:880px;}
+.vf{background:var(--black);border:1px solid var(--line2);overflow:hidden;}
+.vb{position:relative;padding-top:56.25%;}
+.vb video,.vb iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+.vph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:linear-gradient(150deg,#0a0a09,#111110);}
+.vph::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:48px 48px;}
+.play-btn{width:60px;height:60px;border-radius:50%;border:1px solid rgba(0,87,255,.4);display:flex;align-items:center;justify-content:center;color:rgba(0,87,255,.8);font-size:16px;cursor:pointer;transition:all .3s;background:rgba(0,87,255,.06);z-index:1;}
+.play-btn:hover{background:rgba(0,87,255,.14);box-shadow:0 0 32px rgba(0,87,255,.14);transform:scale(1.07);}
+.vph p{font-family:var(--bar);font-size:10px;color:rgba(255,255,255,.18);letter-spacing:.28em;z-index:1;}
+.vm{border:1px solid var(--line2);border-top:none;padding:20px 26px;background:var(--white);display:flex;justify-content:space-between;align-items:center;}
+.vm-t{font-family:var(--bar);font-size:18px;font-weight:400;color:var(--black);margin-bottom:5px;letter-spacing:.02em;}
+.vm-cn{font-family:var(--cn);font-size:11px;font-weight:200;color:var(--light);}
+.vm-dur{font-family:var(--bar);font-size:22px;font-weight:200;color:var(--mid);text-align:right;}
+.vm-dl{font-family:var(--bar);font-size:9px;color:var(--light);letter-spacing:.18em;text-transform:uppercase;}
+
+/* RESOURCES */
+#res{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+.rc{background:var(--white);border:1px solid var(--line2);padding:30px;position:relative;transition:box-shadow .2s,transform .2s;}
+.rc:hover{box-shadow:var(--sh2);transform:translateY(-3px);}
+.rc-tag{font-family:var(--bar);font-size:9px;font-weight:600;color:var(--blue);background:var(--blue-d);padding:3px 10px;letter-spacing:.2em;margin-bottom:14px;display:inline-block;}
+.rc-title{font-family:var(--bar);font-size:19px;font-weight:400;color:var(--black);margin-bottom:5px;letter-spacing:.01em;}
+.rc-cn{font-family:var(--cn);font-size:11px;font-weight:200;color:var(--light);margin-bottom:12px;}
+.rc-desc{font-size:13px;font-weight:300;color:var(--mid);line-height:1.9;margin-bottom:24px;}
+.rc-foot{display:flex;justify-content:space-between;align-items:center;}
+.rc-type{font-family:var(--bar);font-size:10px;color:var(--light);letter-spacing:.12em;}
+.rc-dl{font-family:var(--bar);font-size:11px;font-weight:600;color:var(--blue);text-decoration:none;letter-spacing:.1em;display:flex;align-items:center;gap:8px;transition:opacity .2s;}
+.rc-dl:hover{opacity:.7;}
+.rc-dl .cnt{font-size:10px;font-weight:300;color:var(--light);margin-left:4px;}
+.rc-soon{font-family:var(--bar);font-size:10px;color:var(--light);letter-spacing:.1em;}
+
+/* MEMBERS */
+.mb-layout{display:grid;grid-template-columns:1fr 360px;gap:60px;align-items:start;}
+.prov-hd{font-family:var(--bar);font-size:10px;font-weight:400;color:var(--light);letter-spacing:.22em;text-transform:uppercase;margin-bottom:18px;}
+#prov-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:44px;}
+.pc{font-family:var(--cn);font-size:10px;font-weight:200;color:var(--faint);border:1px solid var(--faint);padding:6px 4px;text-align:center;cursor:default;transition:all .3s;position:relative;}
+.pc.on{color:var(--blue);border-color:var(--blue-l);background:var(--blue-d);}
+.pc .pcc{position:absolute;top:-5px;right:-4px;width:14px;height:14px;background:var(--blue);color:#fff;font-size:7px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--bar);font-weight:600;}
+.mb-stats{display:flex;gap:28px;margin-bottom:28px;}
+.ms{text-align:center;}
+.ms-n{font-family:var(--bar);font-size:26px;font-weight:200;color:var(--blue);}
+.ms-l{font-family:var(--cn);font-size:10px;font-weight:200;color:var(--light);margin-top:2px;}
+#mb-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.mc{background:var(--white);border:1px solid var(--line);padding:14px;}
+.mc-n{font-family:var(--bar);font-size:13px;font-weight:400;color:var(--black);margin-bottom:3px;letter-spacing:.04em;}
+.mc-c{font-family:var(--cn);font-size:10px;font-weight:200;color:var(--mid);margin-bottom:4px;}
+.mc-r{font-family:var(--bar);font-size:9px;font-weight:500;color:var(--blue);background:var(--blue-d);padding:2px 8px;letter-spacing:.12em;display:inline-block;}
+.mb-empty{grid-column:1/-1;font-family:var(--cn);font-size:12px;font-weight:200;color:var(--light);text-align:center;padding:28px;}
+
+/* JOIN FORM */
+.join{background:var(--white);border:1px solid var(--line2);padding:30px;position:sticky;top:72px;}
+.join-t{font-family:var(--bar);font-size:16px;font-weight:400;color:var(--black);letter-spacing:.04em;margin-bottom:4px;}
+.join-s{font-family:var(--cn);font-size:11px;font-weight:200;color:var(--light);margin-bottom:24px;line-height:1.7;}
+.fl{margin-bottom:14px;}
+.fl label{font-family:var(--bar);font-size:9px;font-weight:600;color:var(--light);letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px;}
+.fi,.fs{width:100%;padding:10px 12px;border:1px solid var(--line2);background:var(--bg);font-family:var(--cn);font-size:12px;font-weight:300;color:var(--text);outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none;}
+.fi:focus,.fs:focus{border-color:var(--blue);}
+.fsub{width:100%;padding:12px;margin-top:8px;font-family:var(--bar);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;background:var(--black);color:#fff;border:none;cursor:pointer;transition:background .2s;}
+.fsub:hover{background:var(--blue);}
+.fmsg{font-family:var(--cn);font-size:11px;text-align:center;margin-top:12px;min-height:18px;color:var(--blue);}
+
+/* ABOUT */
+.ab-grid{display:grid;grid-template-columns:370px 1fr;gap:68px;align-items:start;}
+.ab-card{border:1px solid var(--line2);overflow:hidden;background:var(--white);}
+.ab-photo{aspect-ratio:3/4;background:linear-gradient(150deg,#ebebea,#ddddd9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;position:relative;overflow:hidden;}
+.ab-photo::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:var(--line2);transform:translateY(-50%);}
+.ab-photo::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line2);transform:translateX(-50%);}
+.ab-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.ab-phi{font-size:36px;opacity:.1;z-index:1;}
+.ab-phl{font-family:var(--bar);font-size:9px;color:var(--light);letter-spacing:.22em;text-transform:uppercase;z-index:1;}
+.ab-photo.has-img .ab-phi,.ab-photo.has-img .ab-phl{display:none;}
+.ab-nb{padding:18px 22px;border-top:1px solid var(--line);background:var(--white);}
+.ab-n{font-family:var(--bar);font-size:16px;font-weight:400;color:var(--black);letter-spacing:.05em;margin-bottom:4px;}
+.ab-r{font-size:11px;font-weight:300;color:var(--light);}
+.ab-dot{display:inline-block;width:5px;height:5px;background:var(--blue);border-radius:50%;margin-right:7px;}
+.ab-intro{font-size:15px;font-weight:300;line-height:2;color:var(--mid);margin-bottom:40px;}
+.ab-intro strong{color:var(--black);font-weight:500;}
+.ab-intro em{font-family:var(--cn);font-size:12px;font-weight:200;font-style:normal;color:var(--light);display:block;margin-top:16px;line-height:2.1;}
+#ab-stats{display:grid;grid-template-columns:repeat(4,1fr);margin-bottom:40px;}
+.as{padding:18px 14px;border:1px solid var(--line);border-left:none;border-top:1px solid var(--line);transition:background .2s;}
+.as:first-child{border-left:1px solid var(--line);}
+.as:hover{background:var(--blue-d);}
+.as-n{font-family:var(--bar);font-size:24px;font-weight:300;color:var(--blue);margin-bottom:4px;}
+.as-lc{font-family:var(--cn);font-size:10px;font-weight:200;color:var(--light);}
+.as-le{font-family:var(--bar);font-size:9px;color:var(--faint);letter-spacing:.1em;}
+.btns{display:flex;gap:12px;flex-wrap:wrap;}
+
+/* FOOTER */
+footer{background:var(--black)!important;padding:40px 48px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;flex-wrap:wrap;gap:14px;}
+.fl-logo{font-family:var(--bar);font-size:15px;font-weight:400;color:rgba(255,255,255,.5);letter-spacing:.12em;text-transform:uppercase;}
+.fl-logo span{color:var(--blue);}
+.fl-mid{font-family:var(--cn);font-size:11px;font-weight:200;color:rgba(255,255,255,.2);text-align:center;}
+.fl-r{font-family:var(--bar);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;}
+
+/* MOBILE */
+@media(max-width:900px){
+  nav{padding:0 20px;}
+  .nav-links,.nav-dot{display:none;}
+  .nav-ham{display:flex;}
+  .hero{grid-template-columns:1fr;min-height:auto;}
+  .hero-right{display:none;}
+  .hero-left{padding:52px 24px 68px;}
+  .hero::after{display:none;}
+  .hero-h{font-size:clamp(52px,14vw,80px);}
+  section{padding:68px 24px;}
+  #chs{grid-template-columns:1fr 1fr;}
+  #cases{grid-template-columns:1fr;}
+  #res{grid-template-columns:1fr;}
+  .mb-layout{grid-template-columns:1fr;gap:36px;}
+  .join{position:static;}
+  #prov-grid{grid-template-columns:repeat(4,1fr);}
+  #mb-cards{grid-template-columns:repeat(2,1fr);}
+  .ab-grid{grid-template-columns:1fr;gap:36px;}
+  #ab-stats{grid-template-columns:1fr 1fr;}
+  .as:nth-child(2){border-right:1px solid var(--line);}
+  .as:nth-child(3){border-top:none;}
+  footer{padding:28px 24px;flex-direction:column;text-align:center;}
+  .vm{flex-direction:column;gap:10px;align-items:flex-start;}
+}
+@media(max-width:480px){
+  #chs{grid-template-columns:1fr;}
+  #prov-grid{grid-template-columns:repeat(3,1fr);}
+  #mb-cards{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#home">CG <sub>lab</sub></a>
+  <ul class="nav-links" id="nav-ul"></ul>
+  <div class="nav-dot"></div>
+  <button class="nav-ham" id="ham" onclick="toggleMob()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mob-menu" id="mob"></div>
+
+<!-- HERO -->
+<div class="hero" id="home">
+  <div class="hero-grid"></div>
+  <div class="hero-left">
+    <div class="hero-ey">AI Practitioner · 汽配后市场</div>
+    <div class="hero-h">CG<span class="ac">.</span><br>Lab</div>
+    <div class="hero-kn" id="h-kn"></div>
+    <p class="hero-desc-en" id="h-de"></p>
+    <div class="hero-desc-cn" id="h-dc"></div>
+    <div class="cta-row">
+      <a class="btn-p" href="#members">加入同行圈 →</a>
+      <a class="btn-g" href="#lab">浏览案例</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="portrait">
+      <div class="portrait-img" id="p-img">
+        <div class="ph-icon">⬜</div>
+        <div class="ph-lbl">Portrait / 形象照</div>
+      </div>
+      <div class="p-caption">
+        <div>
+          <div class="pc-name" id="p-nm"></div>
+          <div class="pc-role" id="p-rl"></div>
+        </div>
+        <div style="font-family:var(--bar);font-size:10px;color:var(--blue);letter-spacing:.1em;">AI LAB</div>
+      </div>
+    </div>
+    <div class="stat-strip">
+      <div class="ssi"><div class="ssi-num" id="h-mc">—</div><div class="ssi-lbl">同行已加入</div></div>
+      <div class="ssi"><div class="ssi-num">5</div><div class="ssi-lbl">内容频道</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CHANNELS -->
+<section class="bg-o" id="channels">
+  <div class="sec-rule"><span class="sn">00 —</span><span class="st">Channels</span><span class="sc">内容频道</span><div class="sl"></div></div>
+  <div class="sec-h">5 Practice Areas</div>
+  <div class="sec-s">汽配后市场 AI 实践的五个核心方向</div>
+  <div id="chs"></div>
+</section>
+
+<!-- LAB -->
+<section class="bg-w" id="lab">
+  <div class="sec-rule"><span class="sn">01 —</span><span class="st">Lab</span><span class="sc">实验室</span><div class="sl"></div></div>
+  <div class="sec-h">Experiments</div>
+  <div class="sec-s">在真实业务中跑过的实验</div>
+  <div class="filter-bar" id="fb"></div>
+  <div id="cases"></div>
+</section>
+
+<!-- VIDEO -->
+<section class="bg-o" id="video">
+  <div class="sec-rule"><span class="sn">02 —</span><span class="st">Video</span><span class="sc">视频案例</span><div class="sl"></div></div>
+  <div class="sec-h">Case Studies</div>
+  <div class="sec-s">用视频讲清楚一个 AI 实践</div>
+  <div class="video-wrap" id="vw"></div>
+</section>
+
+<!-- RESOURCES -->
+<section class="bg-w" id="resources">
+  <div class="sec-rule"><span class="sn">03 —</span><span class="st">Resources</span><span class="sc">资源下载</span><div class="sl"></div></div>
+  <div class="sec-h">Free Tools</div>
+  <div class="sec-s">开放下载，直接用于你的工作</div>
+  <div id="res"></div>
+</section>
+
+<!-- MEMBERS -->
+<section class="bg-o" id="members">
+  <div class="sec-rule"><span class="sn">04 —</span><span class="st">Community</span><span class="sc">同行圈</span><div class="sl"></div></div>
+  <div class="sec-h">Fellow Practitioners</div>
+  <div class="sec-s">来自全国的汽配后市场 AI 探索者</div>
+  <div class="mb-layout">
+    <div>
+      <div class="prov-hd">— 成员分布 / Member Distribution</div>
+      <div id="prov-grid"></div>
+      <div class="mb-stats">
+        <div class="ms"><div class="ms-n" id="t-mb">0</div><div class="ms-l">总成员</div></div>
+        <div class="ms"><div class="ms-n" id="t-pv">0</div><div class="ms-l">省份</div></div>
+        <div class="ms"><div class="ms-n" id="t-ct">0</div><div class="ms-l">城市</div></div>
+      </div>
+      <div id="mb-cards"><div class="mb-empty">还没有成员，成为第一个 →</div></div>
+    </div>
+    <div>
+      <div class="join">
+        <div class="join-t">加入同行圈</div>
+        <div class="join-s">填写信息，出现在地图上，让同行知道你在这里。</div>
+        <div class="fl"><label for="fn">名字或昵称 / Name</label><input class="fi" id="fn" type="text" placeholder="你的名字或昵称" maxlength="20"></div>
+        <div class="fl"><label for="fc">城市 / City</label><input class="fi" id="fc" type="text" placeholder="如：上海" maxlength="20"></div>
+        <div class="fl">
+          <label for="fp">省份 / Province</label>
+          <select class="fs" id="fp">
+            <option value="">选择省份...</option>
+            <option>北京</option><option>上海</option><option>天津</option><option>重庆</option>
+            <option>广东</option><option>江苏</option><option>浙江</option><option>山东</option>
+            <option>河南</option><option>四川</option><option>湖北</option><option>湖南</option>
+            <option>安徽</option><option>福建</option><option>河北</option><option>陕西</option>
+            <option>江西</option><option>辽宁</option><option>云南</option><option>黑龙江</option>
+            <option>广西</option><option>山西</option><option>贵州</option><option>吉林</option>
+            <option>内蒙古</option><option>新疆</option><option>甘肃</option><option>海南</option>
+            <option>宁夏</option><option>青海</option><option>西藏</option>
+            <option>香港</option><option>澳门</option><option>台湾</option>
+          </select>
+        </div>
+        <div class="fl">
+          <label for="fr">身份 / Role</label>
+          <select class="fs" id="fr">
+            <option value="">选择身份...</option>
+            <option value="品牌商">品牌商 / Brand</option>
+            <option value="经销商">经销商 / Distributor</option>
+            <option value="终端门店">终端门店 / Retailer</option>
+            <option value="行业服务商">行业服务商 / Service Provider</option>
+            <option value="其他">其他 / Other</option>
+          </select>
+        </div>
+        <button class="fsub" onclick="submitMember()">标记我的位置 →</button>
+        <div class="fmsg" id="fmsg"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="bg-w" id="about">
+  <div class="sec-rule"><span class="sn">05 —</span><span class="st">About</span><span class="sc">关于我</span><div class="sl"></div></div>
+  <div class="sec-h" id="ab-nm"></div>
+  <div class="sec-s" id="ab-rl"></div>
+  <div class="ab-grid">
+    <div class="ab-card">
+      <div class="ab-photo" id="ab-ph">
+        <div class="ab-phi">⬜</div>
+        <div class="ab-phl">Photo / 照片</div>
+      </div>
+      <div class="ab-nb">
+        <div class="ab-n" id="ab-n2"></div>
+        <div class="ab-r"><span class="ab-dot"></span><span id="ab-r2"></span></div>
+      </div>
+    </div>
+    <div>
+      <div class="ab-intro"><span id="ab-be"></span><em id="ab-bc"></em></div>
+      <div id="ab-stats"></div>
+      <div class="btns" id="ab-btns"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="fl-logo">CG<span>.</span>lab</div>
+  <div class="fl-mid" id="ft-mid"></div>
+  <div class="fl-r">© 2026 · cg-lab.art</div>
+</footer>
+
+<script>
+// ── Supabase ───────────────────────────────────────────────
+const SB_URL = 'https://fpyvfjxzlshkmhmorrzs.supabase.co';
+const SB_KEY = 'sb_publishable_iK1p7MH3E2e9C9rFIMqiLA_BKPlKlyd';
+const { createClient } = window.supabase;
+const db = createClient(SB_URL, SB_KEY);
+
+const PROVS = ['北京','上海','天津','重庆','广东','江苏','浙江','山东','河南','四川','湖北','湖南','安徽','福建','河北','陕西','江西','辽宁','云南','黑龙江','广西','山西','贵州','吉林','内蒙古','新疆','甘肃','海南','宁夏','青海','西藏','香港','澳门','台湾'];
+
+// ── NAV ───────────────────────────────────────────────────
+function renderNav(){
+  const links=[{l:'Channels 频道',h:'#channels'},{l:'Lab 实验室',h:'#lab'},{l:'Resources 资源',h:'#resources'},{l:'Community 社区',h:'#members'},{l:'About 关于',h:'#about'}];
+  document.getElementById('nav-ul').innerHTML=links.map(a=>`<li><a href="${a.h}">${a.l}</a></li>`).join('');
+  document.getElementById('mob').innerHTML=links.map(a=>`<a href="${a.h}" onclick="closeMob()">${a.l}</a>`).join('')+`<a class="mob-cta" href="#members" onclick="closeMob()">加入同行圈 →</a>`;
+}
+
+// ── HERO ──────────────────────────────────────────────────
+function renderHero(){
+  const s=CONFIG.site, a=CONFIG.about;
+  document.getElementById('h-kn').textContent=s.name_cn;
+  document.getElementById('h-de').innerHTML=s.desc_en.replace(/\bAI\b/g,'<strong>AI</strong>');
+  document.getElementById('h-dc').textContent=s.desc_cn;
+  document.getElementById('p-nm').textContent=a.name;
+  document.getElementById('p-rl').textContent=a.role_en;
+  if(a.photo){const pi=document.getElementById('p-img');pi.classList.add('has-img');const i=document.createElement('img');i.src=a.photo;i.alt=a.name;pi.appendChild(i);}
+}
+
+// ── CHANNELS ──────────────────────────────────────────────
+function renderChannels(){
+  document.getElementById('chs').innerHTML=CONFIG.channels.map(c=>`
+    <div class="ch" onclick="filterCases('${c.id}');document.getElementById('lab').scrollIntoView({behavior:'smooth'})">
+      <div class="ch-n">${c.num}</div>
+      <div class="ch-t">${c.title}</div>
+      <div class="ch-e">${c.en}</div>
+      <div class="ch-d">${c.desc_cn}</div>
+      <ul class="ch-ts">${c.topics.map(t=>`<li>${t}</li>`).join('')}</ul>
+    </div>`).join('');
+}
+
+// ── CASES ─────────────────────────────────────────────────
+let curFilter='all';
+function renderCases(f){
+  curFilter=f||'all';
+  const arr=curFilter==='all'?CONFIG.cases:CONFIG.cases.filter(c=>c.channel===curFilter);
+  document.getElementById('fb').innerHTML=`<button class="fb ${curFilter==='all'?'on':''}" onclick="filterCases('all')">All 全部</button>`+CONFIG.channels.map(c=>`<button class="fb ${curFilter===c.id?'on':''}" onclick="filterCases('${c.id}')">${c.title}</button>`).join('');
+  document.getElementById('cases').innerHTML=arr.length
+    ?arr.map(c=>`<div class="cc">
+        <div class="cc-cover">${c.image?`<img src="${c.image}" alt="${c.title}" loading="lazy">`:''}</div>
+        <div class="cc-meta"><span class="cc-tag">${c.tag}</span><span class="cc-date">${c.date}</span></div>
+        <div class="cc-title">${c.title}</div>
+        <div class="cc-cn">${c.cn}</div>
+        <div class="cc-desc">${c.desc}</div>
+        <a class="cc-link" href="${c.link}">查看详情</a>
+      </div>`).join('')
+    :`<div style="grid-column:1/-1;padding:48px;text-align:center;font-family:var(--cn);font-size:12px;color:var(--light);">该频道暂无案例，敬请期待</div>`;
+}
+function filterCases(f){renderCases(f);}
+
+// ── VIDEO ─────────────────────────────────────────────────
+function renderVideo(){
+  const v=CONFIG.videos[0];if(!v){return;}
+  let pl=v.embed?`<iframe src="${v.embed}" allowfullscreen></iframe>`:v.file?`<video controls><source src="${v.file}"></video>`:`<div class="vph"><div class="play-btn">▶</div><p>VIDEO PLACEHOLDER / 视频占位符</p></div>`;
+  document.getElementById('vw').innerHTML=`<div class="vf"><div class="vb">${pl}</div></div><div class="vm"><div><div class="vm-t">${v.title}</div><div class="vm-cn">${v.cn}</div></div><div><div class="vm-dur">${v.duration}</div><div class="vm-dl">Duration</div></div></div>`;
+}
+
+// ── RESOURCES ─────────────────────────────────────────────
+async function renderResources(){
+  let cnts={};
+  try{const{data}=await db.from('downloads').select('resource_id');if(data)data.forEach(r=>{cnts[r.resource_id]=(cnts[r.resource_id]||0)+1;});}catch(e){}
+  document.getElementById('res').innerHTML=CONFIG.resources.map(r=>`
+    <div class="rc">
+      <div class="rc-tag">${r.tag}</div>
+      <div class="rc-title">${r.title}</div>
+      <div class="rc-cn">${r.cn}</div>
+      <div class="rc-desc">${r.desc}</div>
+      <div class="rc-foot">
+        <span class="rc-type">${r.type}</span>
+        ${r.link?`<a class="rc-dl" href="${r.link}" target="_blank" onclick="trackDl('${r.id}')">下载 Download <span class="cnt">${cnts[r.id]||0}次</span></a>`:`<span class="rc-soon">即将上线 Coming Soon</span>`}
+      </div>
+    </div>`).join('');
+}
+async function trackDl(id){try{await db.from('downloads').insert({resource_id:id});}catch(e){}}
+
+// ── MEMBERS ───────────────────────────────────────────────
+function renderProvGrid(data){
+  const pc={};(data||[]).forEach(m=>{pc[m.province]=(pc[m.province]||0)+1;});
+  document.getElementById('prov-grid').innerHTML=PROVS.map(p=>{const c=pc[p]||0;return`<div class="pc ${c>0?'on':''}" title="${p}：${c}人">${p}${c>0?`<span class="pcc">${c}</span>`:''}</div>`;}).join('');
+}
+function renderMbCards(data){
+  if(!data||!data.length){document.getElementById('mb-cards').innerHTML='<div class="mb-empty">还没有成员，成为第一个 →</div>';return;}
+  document.getElementById('mb-cards').innerHTML=[...data].reverse().slice(0,12).map(m=>`<div class="mc"><div class="mc-n">${m.name}</div><div class="mc-c">📍 ${m.city}，${m.province}</div><div class="mc-r">${m.role}</div></div>`).join('');
+}
+function updateMbStats(data){
+  document.getElementById('t-mb').textContent=data.length;
+  document.getElementById('t-pv').textContent=new Set(data.map(m=>m.province)).size;
+  document.getElementById('t-ct').textContent=new Set(data.map(m=>m.city)).size;
+  document.getElementById('h-mc').textContent=data.length||'—';
+}
+async function loadMembers(){
+  try{const{data,error}=await db.from('members').select('*').order('created_at',{ascending:true});if(error)throw error;renderProvGrid(data);renderMbCards(data);updateMbStats(data||[]);}
+  catch(e){renderProvGrid([]);console.log('Members:',e.message);}
+}
+async function submitMember(){
+  const name=document.getElementById('fn').value.trim();
+  const city=document.getElementById('fc').value.trim();
+  const prov=document.getElementById('fp').value;
+  const role=document.getElementById('fr').value;
+  const msg=document.getElementById('fmsg');
+  if(!name||!city||!prov||!role){msg.textContent='请填写所有字段';msg.style.color='#e55';return;}
+  const btn=document.querySelector('.fsub');btn.textContent='提交中...';btn.disabled=true;
+  try{
+    const{error}=await db.from('members').insert({name,city,province:prov,role});
+    if(error)throw error;
+    msg.textContent='✓ 已加入同行圈！欢迎你。';msg.style.color='var(--blue)';
+    ['fn','fc'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('fp').value='';document.getElementById('fr').value='';
+    await loadMembers();
+  }catch(e){msg.textContent='提交失败，请稍后再试';msg.style.color='#e55';console.log('Submit:',e.message);}
+  finally{btn.textContent='标记我的位置 →';btn.disabled=false;}
+}
+
+// ── ABOUT ─────────────────────────────────────────────────
+function renderAbout(){
+  const a=CONFIG.about;
+  document.getElementById('ab-nm').textContent=a.name;
+  document.getElementById('ab-rl').textContent=a.role_cn;
+  document.getElementById('ab-n2').textContent=a.name;
+  document.getElementById('ab-r2').textContent=a.role_en;
+  document.getElementById('ab-be').textContent=a.bio_en;
+  document.getElementById('ab-bc').textContent=a.bio_cn;
+  if(a.photo){const p=document.getElementById('ab-ph');p.classList.add('has-img');const i=document.createElement('img');i.src=a.photo;i.alt=a.name;p.appendChild(i);}
+  document.getElementById('ab-stats').innerHTML=a.stats.map(s=>`<div class="as"><div class="as-n">${s.num}</div><div class="as-lc">${s.label_cn}</div><div class="as-le">${s.label_en}</div></div>`).join('');
+  const btns=[`<a class="btn-p" href="mailto:${a.email}">✉ 联系我</a>`];
+  if(a.linkedin)btns.push(`<a class="btn-g" href="${a.linkedin}" target="_blank">LinkedIn →</a>`);
+  document.getElementById('ab-btns').innerHTML=btns.join('');
+  document.getElementById('ft-mid').textContent=CONFIG.site.desc_cn;
+}
+
+// ── MOB MENU ──────────────────────────────────────────────
+function toggleMob(){document.getElementById('mob').classList.toggle('open');document.getElementById('ham').classList.toggle('open');}
+function closeMob(){document.getElementById('mob').classList.remove('open');document.getElementById('ham').classList.remove('open');}
+document.addEventListener('click',e=>{const m=document.getElementById('mob'),b=document.getElementById('ham');if(m.classList.contains('open')&&!m.contains(e.target)&&!b.contains(e.target))closeMob();});
+
+// ── INIT ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',async()=>{
+  renderNav();renderHero();renderChannels();renderCases('all');renderVideo();renderAbout();
+  await renderResources();await loadMembers();
+});
+</script>
+</body>
+</html>
